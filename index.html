@@ -68,7 +68,7 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- PAGE: LOGIN                                -->
+  <!-- PAGE: LOGIN & REGISTER                     -->
   <!-- ========================================== -->
   <div id="loginPage" class="container-fluid min-vh-100 d-flex align-items-center justify-content-center d-none">
     <div class="card card-custom p-4 p-md-5" style="width: 100%; max-width: 450px;">
@@ -77,15 +77,43 @@
         <h4 class="fw-bold text-emerald">SIMAS</h4>
         <p class="text-muted small">YASPI MIFA</p>
       </div>
-      <form onsubmit="event.preventDefault(); handleLogin();">
+      
+      <!-- FORM LOGIN -->
+      <form id="formLogin" onsubmit="event.preventDefault(); handleLogin();">
         <div class="mb-3"><label class="form-label small fw-semibold text-muted">Username</label><input type="text" id="username" class="form-control" required autocomplete="username"></div>
         <div class="mb-3"><label class="form-label small fw-semibold text-muted">Password</label><input type="password" id="password" class="form-control" required autocomplete="current-password"></div>
         <div class="mb-4">
           <label class="form-label small fw-semibold text-muted">Verifikasi Keamanan</label>
           <div class="math-captcha"><span id="mathQ">0 + 0 =</span><input type="number" id="mathA" class="form-control" required></div>
         </div>
-        <button type="submit" class="btn btn-emerald w-100 py-2 fw-semibold">Login ke Sistem</button>
+        <button type="submit" class="btn btn-emerald w-100 py-2 fw-semibold mb-3">Login ke Sistem</button>
+        <div class="text-center small">
+          Belum punya akun? <a href="#" onclick="toggleAuth('register')" class="text-emerald text-decoration-none fw-bold">Daftar di sini</a>
+        </div>
       </form>
+
+      <!-- FORM REGISTER -->
+      <form id="formRegister" class="d-none" onsubmit="event.preventDefault(); handleRegister();">
+        <div class="mb-3"><label class="form-label small fw-semibold text-muted">Nama Lengkap</label><input type="text" id="regFullname" class="form-control" required></div>
+        <div class="mb-3"><label class="form-label small fw-semibold text-muted">Username Baru</label><input type="text" id="regUsername" class="form-control" required></div>
+        <div class="mb-3"><label class="form-label small fw-semibold text-muted">Password</label><input type="password" id="regPassword" class="form-control" required></div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-muted">Role Akses</label>
+          <select id="regRole" class="form-select" required>
+            <option value="Staff">Staff TU</option>
+            <option value="Admin">Admin Sekolah</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="form-label small fw-semibold text-emerald">Kode Registrasi</label>
+          <input type="password" id="regCode" class="form-control border-emerald" required placeholder="Masukkan kode otorisasi">
+        </div>
+        <button type="submit" class="btn btn-emerald w-100 py-2 fw-semibold mb-3">Buat Akun</button>
+        <div class="text-center small">
+          Sudah punya akun? <a href="#" onclick="toggleAuth('login')" class="text-emerald text-decoration-none fw-bold">Login di sini</a>
+        </div>
+      </form>
+
       <footer class="text-center mt-4"><small class="text-muted">by <a href="" target="_blank" class="text-decoration-none text-emerald">Admin Yayasan</a></small></footer>
     </div>
   </div>
@@ -323,7 +351,7 @@
     let currentCaptchaToken = '';
 
     // TODO: GANTI URL INI DENGAN WEB APP URL DARI GOOGLE APPS SCRIPT ANDA!
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxZHQtB0lcgN6jinanyjO7d3Qm_hxbm0x_SY7owXNx-bTgv4cKCJMAzX-rh-GNW1599/exec'; 
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwfXAYxTDqBpweoTlJYO__zpSFDRRuC1cubvJzbpiFa9KfVDVMNcuyW0uwmKROXlel_/exec'; 
 
     function gasRun(funcName) {
       var args = Array.prototype.slice.call(arguments, 1);
@@ -445,6 +473,44 @@
       else if (pageName === 'guru') { if (!isGuruLoaded || !silent) fetchGuru(silent); else renderGuru(); }
       else if (pageName === 'arsip') { if (!isArsipLoaded || !silent) fetchArsip(silent); else renderArsip(); }
       else if (pageName === 'terbit') { if (!isSiswaLoaded) fetchSiswa(true); if (!isGuruLoaded) fetchGuru(true); }
+    }
+
+    function toggleAuth(type) {
+      if (type === 'register') {
+        document.getElementById('formLogin').classList.add('d-none');
+        document.getElementById('formRegister').classList.remove('d-none');
+      } else {
+        document.getElementById('formRegister').classList.add('d-none');
+        document.getElementById('formLogin').classList.remove('d-none');
+        initMathCaptcha();
+      }
+    }
+
+    function handleRegister() {
+      var fullname = document.getElementById('regFullname').value.trim();
+      var username = document.getElementById('regUsername').value.trim();
+      var password = document.getElementById('regPassword').value.trim();
+      var role = document.getElementById('regRole').value;
+      var code = document.getElementById('regCode').value.trim();
+
+      if (!fullname || !username || !password || !code) return Swal.fire('Oops', 'Lengkapi semua form pendaftaran!', 'warning');
+      
+      showFullPageLoading('Mendaftarkan Akun...');
+      
+      gasRun('registerUser', fullname, username, password, role, code).then(res => {
+        hideFullPageLoading();
+        if (res.success) {
+          Swal.fire('Berhasil!', 'Akun Anda berhasil dibuat. Silakan login.', 'success').then(() => {
+            document.getElementById('formRegister').reset();
+            toggleAuth('login');
+          });
+        } else {
+          Swal.fire('Gagal', res.message, 'error');
+        }
+      }).catch(err => {
+        hideFullPageLoading();
+        Swal.fire('Error', err.message, 'error');
+      });
     }
 
     // UPDATE: Validasi Login Sepenuhnya Diserahkan ke Backend
