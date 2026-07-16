@@ -323,7 +323,7 @@
     let currentCaptchaToken = '';
 
     // TODO: GANTI URL INI DENGAN WEB APP URL DARI GOOGLE APPS SCRIPT ANDA!
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzfx-mZdTaBMw-k-CO8qvlE_s0CgCV85Dnt5fAvc1db_CejBvE93mPteGPdV4KtCrVX/exec'; 
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyoD9G-qG6U-sJGZThJhyi8peyVNzD6S1WKJJEsSUmgAjNdeu6VsyNFX3956P67t5A1/exec'; 
 
     function gasRun(funcName) {
       var args = Array.prototype.slice.call(arguments, 1);
@@ -363,7 +363,7 @@
       document.getElementById('dinasTglKembali').value = isoDate;
     }
 
-    // UPDATE: Meminta Captcha dari Backend
+    // UPDATE: Meminta Captcha dari Backend (Server-Side)
     function initMathCaptcha() {
       document.getElementById('mathQ').innerHTML = '<span class="spinner-border spinner-border-sm text-emerald"></span>';
       document.getElementById('mathA').value = '';
@@ -402,6 +402,7 @@
       var loginPage = document.getElementById('loginPage');
       var mainApp = document.getElementById('mainApp');
       
+      // CEK SESSION STORAGE SEBELUM MENAMPILKAN FORM LOGIN
       if (!currentUser) {
         let savedSession = sessionStorage.getItem('simas_user');
         if (savedSession) {
@@ -455,6 +456,8 @@
       if (!u || !p || !a) return Swal.fire('Oops', 'Isi username, password, dan verifikasi keamanan', 'warning');
       
       showFullPageLoading('Memverifikasi Identitas...');
+      
+      // Kirim u (username), p (password), a (jawaban captcha), dan currentCaptchaToken (token server)
       gasRun('loginUser', u, p, a, currentCaptchaToken).then(res => {
         hideFullPageLoading(); 
         if (res.success) { 
@@ -463,7 +466,6 @@
           checkLoginState(); 
         } 
         else { 
-          // Jika gagal (termasuk captcha salah), otomatis generate captcha baru
           initMathCaptcha(); 
           Swal.fire('Gagal', res.message, 'error'); 
         }
