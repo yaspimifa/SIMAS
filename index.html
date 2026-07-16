@@ -321,7 +321,7 @@
     let mathCaptchaVal = 0;
 
     // TODO: GANTI URL INI DENGAN WEB APP URL DARI GOOGLE APPS SCRIPT ANDA!
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxICGq7vbd6hieKjQCDIy3OS27xBTnkZ26luB2pdvRoy_Xy_wj3ZAX2cN38eYMALndA/exec'; 
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyoD9G-qG6U-sJGZThJhyi8peyVNzD6S1WKJJEsSUmgAjNdeu6VsyNFX3956P67t5A1/exec'; 
 
     function gasRun(funcName) {
       var args = Array.prototype.slice.call(arguments, 1);
@@ -388,28 +388,29 @@
     }
 
     function checkLoginState() {
-  var loginPage = document.getElementById('loginPage');
-  var mainApp = document.getElementById('mainApp');
-  
-  // CEK SESSION STORAGE: Jika currentUser null, coba ambil dari session
-  if (!currentUser) {
-    let savedSession = sessionStorage.getItem('simas_user');
-    if (savedSession) {
-      currentUser = JSON.parse(savedSession);
-    }
-  }
+      var loginPage = document.getElementById('loginPage');
+      var mainApp = document.getElementById('mainApp');
+      
+      // CEK SESSION STORAGE SEBELUM MENAMPILKAN FORM LOGIN
+      if (!currentUser) {
+        let savedSession = sessionStorage.getItem('simas_user');
+        if (savedSession) {
+          currentUser = JSON.parse(savedSession);
+        }
+      }
 
-  if (currentUser) {
-    loginPage.classList.add('d-none'); mainApp.classList.remove('d-none');
-    document.getElementById('displayUser').innerText = currentUser.fullname || currentUser.username;
-    document.getElementById('displayRole').innerText = currentUser.role;
-    document.getElementById('navAdminOnly').style.display = (currentUser.role === 'Admin') ? 'block' : 'none';
-    showPage('dashboard');
-  } else {
-    mainApp.classList.add('d-none'); loginPage.classList.remove('d-none');
-    initMathCaptcha();
-  }
-}
+      if (currentUser) {
+        loginPage.classList.add('d-none'); mainApp.classList.remove('d-none');
+        document.getElementById('displayUser').innerText = currentUser.fullname || currentUser.username;
+        document.getElementById('displayRole').innerText = currentUser.role;
+        document.getElementById('navAdminOnly').style.display = (currentUser.role === 'Admin') ? 'block' : 'none';
+        showPage('dashboard');
+      } else {
+        mainApp.classList.add('d-none'); loginPage.classList.remove('d-none');
+        initMathCaptcha();
+      }
+    }
+    
     function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('active'); document.querySelector('.sidebar-overlay').classList.toggle('active'); }
 
     function showPage(pageName, navEl) {
@@ -436,31 +437,31 @@
     }
 
     function handleLogin() {
-  var u = document.getElementById('username').value.trim(); var p = document.getElementById('password').value.trim(); var a = parseInt(document.getElementById('mathA').value);
-  if (!u || !p) return Swal.fire('Oops', 'Isi username & password', 'warning');
-  if (a !== mathCaptchaVal) { initMathCaptcha(); return Swal.fire('Error', 'Jawaban verifikasi matematika salah!', 'error'); }
-  showFullPageLoading('Memverifikasi Identitas...');
-  gasRun('loginUser', u, p).then(res => {
-    hideFullPageLoading(); 
-    if (res.success) { 
-      currentUser = res.user; 
-      // SIMPAN KE SESSION
-      sessionStorage.setItem('simas_user', JSON.stringify(currentUser));
-      checkLoginState(); 
-    } 
-    else { initMathCaptcha(); Swal.fire('Gagal', res.message, 'error'); }
-  }).catch(err => { 
-    hideFullPageLoading(); initMathCaptcha(); Swal.fire('Error', err.message, 'error'); 
-  });
-}
+      var u = document.getElementById('username').value.trim(); var p = document.getElementById('password').value.trim(); var a = parseInt(document.getElementById('mathA').value);
+      if (!u || !p) return Swal.fire('Oops', 'Isi username & password', 'warning');
+      if (a !== mathCaptchaVal) { initMathCaptcha(); return Swal.fire('Error', 'Jawaban verifikasi matematika salah!', 'error'); }
+      showFullPageLoading('Memverifikasi Identitas...');
+      gasRun('loginUser', u, p).then(res => {
+        hideFullPageLoading(); 
+        if (res.success) { 
+          currentUser = res.user; 
+          // SIMPAN SESSION SETELAH BERHASIL LOGIN
+          sessionStorage.setItem('simas_user', JSON.stringify(currentUser));
+          checkLoginState(); 
+        } 
+        else { initMathCaptcha(); Swal.fire('Gagal', res.message, 'error'); }
+      }).catch(err => { 
+        hideFullPageLoading(); initMathCaptcha(); Swal.fire('Error', err.message, 'error'); 
+      });
+    }
 
     function logout() { 
-  currentUser = null; 
-  sessionStorage.removeItem('simas_user'); // HAPUS SESSION
-  dbSiswa = []; isSiswaLoaded = false; dbGuru = []; isGuruLoaded = false; 
-  dbArsip = []; isArsipLoaded = false; dbStats = null; isStatsLoaded = false; 
-  checkLoginState(); 
-}
+      currentUser = null; 
+      // HAPUS SESSION SAAT LOGOUT
+      sessionStorage.removeItem('simas_user'); 
+      dbSiswa = []; isSiswaLoaded = false; dbGuru = []; isGuruLoaded = false; dbArsip = []; isArsipLoaded = false; dbStats = null; isStatsLoaded = false; 
+      checkLoginState(); 
+    }
 
     function fetchDashboard(silent) {
       let req = 'dashboard'; if(!silent) showSectionLoading('dashStatsContainer');
